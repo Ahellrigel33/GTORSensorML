@@ -16,7 +16,7 @@ class SensorData:
         self.x_test = None
         self.y_test = None
         self.imported_labels = ['time_auxdaq_us', 'speed_engine_rpm', 'speed_secondary_rpm', 'lds_pedal_mm', 'imu_acceleration_x', 'imu_acceleration_y', 'imu_acceleration_z', 'pressure_frontbrake_psi']
-        self.sensors = ['time', 'engine', 'secondary', 'pedal_lds', 'imux', 'imuy', 'imuz', 'front_brake']
+        self.sensors = ['time', 'engine', 'secondary', 'pedal_lds', 'imux', 'imuy', 'imuz', 'brake']
         self.average_sensors = ['engine', 'secondary', 'imux', 'imuy', 'imuz']
         self.bin_files = ['cody_BIN', 'andrew3_BIN', 'andrew4_BIN', 'caden1_BIN']
         self.daata_files = ['cody', 'abhi', 'andrew1', 'andrew2', 'andrew3', 'caden1', 'caden2']
@@ -106,18 +106,19 @@ class SensorData:
                 self.validation_data['cody_BIN'][key] = self.named_data['cody_BIN'][key][50000:84000]
                 self.named_data['cody_BIN'][key] = np.concatenate((self.named_data['cody_BIN'][key][:50000], self.named_data['cody_BIN'][key][84000:]))
 
-    def get_list_of_sensor_weight_positions(self):
-        weight_pos = list()
-        for i in range(-10, 0):
-            for sensor in self.sensors:
-                weight_pos.append("{} pos {}: ".format(sensor, i))
-        weight_pos.append("Offset: ")
-        return weight_pos
-
     def print_weights(self, weights):
-        positions = self.get_list_of_sensor_weight_positions()
-        for i in range(len(positions)):
-            print(positions[i] + str(weights[i]))
+        index = 0
+        string = "    "
+        for sensor in self.sensors:
+            string += sensor.rjust(10)
+        print(string)
+
+        for i in range(-10, 0):
+            string = "{}: ".format(i).rjust(5)
+            for j in range(len(self.sensors)):
+                string += " {:.5f} ".format(weights[index]).rjust(10)
+                index += 1
+            print(string)
 
     def aggregate_data(self, percent_data=0.02, use_daata_files=False):
         for k, data_to_aggregate in enumerate([self.named_data, self.validation_data, self.test_data]):
@@ -130,7 +131,7 @@ class SensorData:
                                                              data_to_aggregate[key]['imux'],
                                                              data_to_aggregate[key]['imuy'],
                                                              data_to_aggregate[key]['imuz'],
-                                                             data_to_aggregate[key]['front_brake']]).T
+                                                             data_to_aggregate[key]['brake']]).T
 
             data_points = 0
             for key in self.bin_files:
