@@ -16,9 +16,9 @@ class SensorData:
         self.y_val = None
         self.x_test = None
         self.y_test = None
-        self.imported_labels = ['time_auxdaq_us', 'speed_engine_rpm', 'speed_secondary_rpm', 'lds_pedal_mm', 'imu_acceleration_x', 'imu_acceleration_y', 'imu_acceleration_z', 'pressure_frontbrake_psi']
-        self.sensors = ['time', 'engine', 'secondary', 'pedal_lds', 'imux', 'imuy', 'imuz', 'brake']
-        self.average_sensors = ['engine', 'secondary', 'imux', 'imuy', 'imuz']
+        self.imported_labels = ['time_auxdaq_us', 'speed_engine_rpm', 'speed_secondary_rpm', 'lds_pedal_mm', 'pressure_frontbrake_psi']
+        self.sensors = ['time', 'engine', 'secondary', 'pedal_lds', 'brake']
+        self.average_sensors = ['engine', 'secondary']
         self.bin_files = ['cody_BIN', 'andrew3_BIN', 'andrew4_BIN', 'caden1_BIN']
         self.daata_files = ['cody', 'abhi', 'andrew1', 'andrew2', 'andrew3', 'caden1', 'caden2']
 
@@ -114,7 +114,7 @@ class SensorData:
             string += sensor.rjust(12)
         print(string)
 
-        for i in range(-10, 0):
+        for i in range(-self.holdpoints, 0):
             string = "{}: ".format(i).rjust(5)
             for j in range(len(self.sensors)):
                 string += " {:.5f} ".format(weights[index]).rjust(12)
@@ -128,7 +128,7 @@ class SensorData:
             string += sensor.rjust(12)
         print(string)
 
-        for i in range(-10, 0):
+        for i in range(-self.holdpoints, 0):
             string = "{}: ".format(i).rjust(5)
             for j in range(len(self.sensors)):
                 string += " {:.2f} ".format(point[index]).rjust(12)
@@ -143,9 +143,9 @@ class SensorData:
                                                              data_to_aggregate[key]['engine'],
                                                              data_to_aggregate[key]['secondary'],
                                                              data_to_aggregate[key]['pedal_lds'],
-                                                             data_to_aggregate[key]['imux'],
-                                                             data_to_aggregate[key]['imuy'],
-                                                             data_to_aggregate[key]['imuz'],
+                                                            #  data_to_aggregate[key]['imux'],
+                                                            #  data_to_aggregate[key]['imuy'],
+                                                            #  data_to_aggregate[key]['imuz'],
                                                              data_to_aggregate[key]['brake']]).T
 
             data_points = 0
@@ -233,7 +233,7 @@ class SensorData:
             for j, point in enumerate(data[k]):
                 curr_time = point[-(len(self.sensors) + 1)]
                 index = 0
-                for i in range(10):
+                for i in range(self.holdpoints):
                     for sensor in self.sensors:
                         if sensor == 'time':
                             data[k][j][index] -= curr_time
