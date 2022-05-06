@@ -121,6 +121,20 @@ class SensorData:
                 index += 1
             print(string)
 
+    def print_point(self, point):
+        index = 0
+        string = "    "
+        for sensor in self.sensors:
+            string += sensor.rjust(12)
+        print(string)
+
+        for i in range(-10, 0):
+            string = "{}: ".format(i).rjust(5)
+            for j in range(len(self.sensors)):
+                string += " {:.2f} ".format(point[index]).rjust(12)
+                index += 1
+            print(string)
+
     def aggregate_data(self, percent_data=0.02, use_daata_files=False):
         for k, data_to_aggregate in enumerate([self.named_data, self.validation_data, self.test_data]):
             i = 0
@@ -198,11 +212,11 @@ class SensorData:
             if k == 2:
                 self.x_test = x_data
                 self.y_test = y_data
+        self.fix_time()
 
     def noise_injection(self, **kwargs):
         p = kwargs.get('injection_probability', 0.1)
         use_dropout = kwargs.get('use_dropout', False)
-        mean = np.mean(self.x_train, axis=0)
         std_dev = np.std(self.x_train, axis=0) * kwargs.get('noise_variation', 0.1)
         print(self.x_train.shape)
         for i in range(self.x_train.shape[0]):
@@ -211,7 +225,19 @@ class SensorData:
                     if use_dropout:
                         self.x_train[i][j] = 0
                     else:
-                        self.x_train[i][j] += np.random.normal(mean[j], std_dev[j])
+                        self.x_train[i][j] += np.random.normal(0, std_dev[j])
+
+    def fix_time(self):
+        data = [self.x_train, self.x_val, self.x_test]
+        for k in range(len(data)):
+            for j, point in enumerate(data[k]):
+                curr_time = point[-(len(self.sensors) + 1)]
+                index = 0
+                for i in range(10):
+                    for sensor in self.sensors:
+                        if sensor == 'time':
+                            data[k][j][index] -= curr_time
+                        index += 1
 
 
 if __name__ == "__main__":
@@ -220,7 +246,9 @@ if __name__ == "__main__":
     S.preprocess_data()
     S.split_data()
     S.aggregate_data()
-    S.noise_injection()
+    #S.noise_injection()
+
+    print(S.print_point(S.x_train[1500]))
 
     # print(S.x_train.shape)
     # print(np.sum(np.isnan(S.x_train)))
