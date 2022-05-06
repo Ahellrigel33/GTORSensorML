@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import math
+# import math
 
 
 class SensorData:
@@ -113,12 +113,12 @@ class SensorData:
             for key in self.bin_files:
                 if key in data_to_aggregate.keys():
                     num_points, num_features = data_to_aggregate[key]["aggregate"].shape
-                    data_points += math.floor(num_points*percent_data)
+                    data_points += int(np.floor(num_points*percent_data))
             if use_daata_files:
                 for key in self.daata_files:
                     if key in data_to_aggregate.keys():
                         num_points, num_features = data_to_aggregate[key]["aggregate"].shape
-                        data_points += math.floor(num_points * percent_data)
+                        data_points += int(np.floor(num_points * percent_data))
 
             x_data = np.empty((data_points, num_features * self.holdpoints + 1))
             y_data = np.empty((data_points, 2))
@@ -127,7 +127,7 @@ class SensorData:
                 if key in data_to_aggregate.keys():
                     num_points, num_features = data_to_aggregate[key]["aggregate"].shape
                     rng = np.random.default_rng(np.random.randint(10000))  # Make each selection random but still repeatable
-                    numbers = rng.choice((num_points - self.holdpoints - self.bin_predict), size=math.floor(num_points*percent_data), replace=False)
+                    numbers = rng.choice((num_points - self.holdpoints - self.bin_predict), size=int(np.floor(num_points*percent_data)), replace=False)
 
                     for i, base in enumerate(numbers):
                         for hp in range(self.holdpoints):
@@ -142,7 +142,7 @@ class SensorData:
                     if key in data_to_aggregate.keys():
                         num_points, num_features = data_to_aggregate[key]["aggregate"].shape
                         rng = np.random.default_rng(np.random.randint(10000))  # Make each selection random but still repeatable
-                        numbers = rng.choice((num_points - self.holdpoints - self.daata_predict), size=math.floor(num_points*percent_data), replace=False)
+                        numbers = rng.choice((num_points - self.holdpoints - self.daata_predict), size=int(np.floor(num_points*percent_data)), replace=False)
 
                         for i, base in enumerate(numbers):
                             for hp in range(self.holdpoints):
@@ -171,4 +171,6 @@ if __name__ == "__main__":
     S.aggregate_data()
 
     print(S.x_train.shape)
+    print(np.sum(np.isnan(S.x_train)))
+    print(S.x_train.dtype)
 
