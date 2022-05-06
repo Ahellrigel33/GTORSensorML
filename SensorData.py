@@ -212,7 +212,7 @@ class SensorData:
             if k == 2:
                 self.x_test = x_data
                 self.y_test = y_data
-        self.fix_time()
+        self.fix_data()
 
     def noise_injection(self, **kwargs):
         p = kwargs.get('injection_probability', 0.1)
@@ -227,7 +227,7 @@ class SensorData:
                     else:
                         self.x_train[i][j] += np.random.normal(0, std_dev[j])
 
-    def fix_time(self):
+    def fix_data(self):
         data = [self.x_train, self.x_val, self.x_test]
         for k in range(len(data)):
             for j, point in enumerate(data[k]):
@@ -237,6 +237,8 @@ class SensorData:
                     for sensor in self.sensors:
                         if sensor == 'time':
                             data[k][j][index] -= curr_time
+                        if sensor == 'pedal_lds':
+                            data[k][j][index] = -(data[k][j][index] - 126)
                         index += 1
 
 
@@ -248,7 +250,8 @@ if __name__ == "__main__":
     S.aggregate_data()
     #S.noise_injection()
 
-    print(S.print_point(S.x_train[1500]))
+    print(S.print_point(S.x_train[600]))
+    print(S.print_point(S.x_train[800]))
 
     # print(S.x_train.shape)
     # print(np.sum(np.isnan(S.x_train)))
