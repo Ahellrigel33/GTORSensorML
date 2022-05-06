@@ -30,17 +30,17 @@ class SensorData:
     def import_csv_files(self):
         # Import data from CSV files
         imported = dict()
-        # imported['cody'] = np.genfromtxt('CSVFiles/Cody_4LapTest1.csv', dtype=float, delimiter=",", names=True)
-        # imported['cody_BIN'] = np.genfromtxt('CSVFiles/Cody_4LapTest1_BIN.csv', dtype=float, delimiter=",", names=True)
-        # imported['abhi'] = np.genfromtxt('CSVFiles/Abhi_Test1_BeforeSecondaryBreak.csv', dtype=float, delimiter=",", names=True)
-        # imported['andrew1'] = np.genfromtxt('CSVFiles/Andrew_1.csv', dtype=float, delimiter=",", names=True)
-        # imported['andrew2'] = np.genfromtxt('CSVFiles/Andrew_1Lap_Medium.csv', dtype=float, delimiter=",", names=True)
-        # imported['andrew3'] = np.genfromtxt('CSVFiles/Andrew_2.csv', dtype=float, delimiter=",", names=True)
-        # imported['andrew3_BIN'] = np.genfromtxt('CSVFiles/Andrew_2_BIN.csv', dtype=float, delimiter=",", names=True)
-        # imported['andrew4_BIN'] = np.genfromtxt('CSVFiles/ProbAndrew_BIN.csv', dtype=float, delimiter=",", names=True)
-        # imported['caden1'] = np.genfromtxt('CSVFiles/Caden_3Laps_FullSpeed.csv', dtype=float, delimiter=",", names=True)
+        imported['cody'] = np.genfromtxt('CSVFiles/Cody_4LapTest1.csv', dtype=float, delimiter=",", names=True)
+        imported['cody_BIN'] = np.genfromtxt('CSVFiles/Cody_4LapTest1_BIN.csv', dtype=float, delimiter=",", names=True)
+        imported['abhi'] = np.genfromtxt('CSVFiles/Abhi_Test1_BeforeSecondaryBreak.csv', dtype=float, delimiter=",", names=True)
+        imported['andrew1'] = np.genfromtxt('CSVFiles/Andrew_1.csv', dtype=float, delimiter=",", names=True)
+        imported['andrew2'] = np.genfromtxt('CSVFiles/Andrew_1Lap_Medium.csv', dtype=float, delimiter=",", names=True)
+        imported['andrew3'] = np.genfromtxt('CSVFiles/Andrew_2.csv', dtype=float, delimiter=",", names=True)
+        imported['andrew3_BIN'] = np.genfromtxt('CSVFiles/Andrew_2_BIN.csv', dtype=float, delimiter=",", names=True)  # Engine just at steady state
+        imported['andrew4_BIN'] = np.genfromtxt('CSVFiles/ProbAndrew_BIN.csv', dtype=float, delimiter=",", names=True)
+        imported['caden1'] = np.genfromtxt('CSVFiles/Caden_3Laps_FullSpeed.csv', dtype=float, delimiter=",", names=True)
         imported['caden1_BIN'] = np.genfromtxt('CSVFiles/Caden_3Laps_FullSpeed_BIN.csv', dtype=float, delimiter=",", names=True)
-        # imported['caden2'] = np.genfromtxt('CSVFiles/Caden_3LapTest_FullSpeed.csv', dtype=float, delimiter=",", names=True)
+        imported['caden2'] = np.genfromtxt('CSVFiles/Caden_3LapTest_FullSpeed.csv', dtype=float, delimiter=",", names=True)
 
         # Convert everything to numpy arrays and store sensor data under simpler labels
         for key in imported:
@@ -108,6 +108,7 @@ class SensorData:
 
     def aggregate_data(self, percent_data=0.02, use_daata_files=False):
         for k, data_to_aggregate in enumerate([self.named_data, self.validation_data, self.test_data]):
+            i = 0
             for key in data_to_aggregate:
                 data_to_aggregate[key]['aggregate'] = np.array([data_to_aggregate[key]['time'],
                                                              data_to_aggregate[key]['engine'],
@@ -146,13 +147,14 @@ class SensorData:
                         numbers = rng.choice((num_points - self.holdpoints - self.bin_predict), size=int(np.floor(num_points*percent_data)), replace=False)
                     else:
                         numbers = range((num_points - self.holdpoints - self.bin_predict))
-                    for i, base in enumerate(numbers):
+                    for base in numbers:
                         for hp in range(self.holdpoints):
                             x_data[i, hp * num_features:(hp + 1) * num_features] = data_to_aggregate[key]['aggregate'][base + hp, :]
                         x_data[i, num_features * self.holdpoints] = 1
 
                         y_data[i, 0] = data_to_aggregate[key]['engine'][base + self.holdpoints + self.bin_predict]
                         y_data[i, 1] = data_to_aggregate[key]['secondary'][base + self.holdpoints + self.bin_predict]
+                        i += 1
 
             if use_daata_files:
                 for key in self.daata_files:
@@ -164,13 +166,14 @@ class SensorData:
                         else:
                             numbers = range((num_points - self.holdpoints - self.daata_predict))
 
-                        for i, base in enumerate(numbers):
+                        for base in numbers:
                             for hp in range(self.holdpoints):
                                 x_data[i, hp * num_features:(hp + 1) * num_features] = data_to_aggregate[key]['aggregate'][base + hp, :]
                             x_data[i, num_features * self.holdpoints] = 1
 
                             y_data[i, 0] = data_to_aggregate[key]['engine'][base + self.holdpoints + self.daata_predict]
                             y_data[i, 1] = data_to_aggregate[key]['secondary'][base + self.holdpoints + self.daata_predict]
+                            i += 1
             if k == 0:
                 self.x_train = x_data
                 self.y_train = y_data
