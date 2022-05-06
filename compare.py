@@ -26,7 +26,7 @@ names['none'] = 'No'
 
 reg = dict()
 reg['ridge'] = Ridge(alpha=1e3); names['ridge'] = 'Ridge'
-reg['lasso'] = Lasso(alpha=1e3); names['lasso'] = 'LASSO'
+reg['lasso'] = Lasso(alpha=1); names['lasso'] = 'LASSO'
 reg['krr']   = KernelRidge(kernel='poly', gamma=1.0e-6, alpha=1e-5); names['krr'] = 'Kernel Ridge'
 reg['svr']   = SVR(kernel='rbf', epsilon=100, gamma=1, C=1); names['svr'] = 'Support Vector'
 reg['mlp']   = MLPRegressor(max_iter=1000, hidden_layer_sizes=(100,100), 
@@ -100,7 +100,7 @@ for index, test in enumerate(tests) :
     # axis.plot(y_val_pred, label='val_pred')
     axis.legend()
 
-    if (test[0] == 'ridge' or test[0] == 'lasso'):
+    if ((test[0] == 'ridge' or test[0] == 'lasso') and test[2] == 'none'):
         S.print_weights(reg[test[0]].coef_[1,:])
 
     print('Training   R^2: E=%.4f, S=%.4f' % (r2_score(y_train[:,0], y_train_pred[:,0]), r2_score(y_train[:,1], y_train_pred[:,1])))
