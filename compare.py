@@ -10,7 +10,7 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.svm import SVR
 from sklearn.metrics import r2_score, mean_squared_error
 
-S = SensorData(bin_predict=300, bin_average_window=50)
+S = SensorData(bin_predict=100, bin_average_window=100)
 S.import_csv_files()
 S.preprocess_data()
 S.split_data()
@@ -25,9 +25,9 @@ names = dict()
 names['none'] = 'No'
 
 reg = dict()
-reg['ridge'] = Ridge(alpha=1); names['ridge'] = 'Ridge'
-reg['lasso'] = Lasso(alpha=1); names['lasso'] = 'LASSO'
-reg['krr']   = KernelRidge(kernel='rbf', gamma=1.0e-6, alpha=1e-5); names['krr'] = 'Kernel Ridge'
+reg['ridge'] = Ridge(alpha=1e3); names['ridge'] = 'Ridge'
+reg['lasso'] = Lasso(alpha=1e3); names['lasso'] = 'LASSO'
+reg['krr']   = KernelRidge(kernel='poly', gamma=1.0e-6, alpha=1e-5); names['krr'] = 'Kernel Ridge'
 reg['svr']   = SVR(kernel='rbf', epsilon=100, gamma=1, C=1); names['svr'] = 'Support Vector'
 reg['mlp']   = MLPRegressor(max_iter=1000, hidden_layer_sizes=(100,100), 
                             activation='relu', alpha=1); names['mlp'] = 'MLP'
@@ -43,12 +43,14 @@ reduc['kpca']  = KernelPCA(n_components=40, kernel="poly"); names['kpca'] = 'Ker
 tests = [
     ['ridge', 'none' , 'none'],
     ['lasso', 'none', 'none'],
-    ['ridge', 'stand', 'none'],
+    ['ridge', 'none' , 'kpca'],
+    ['krr', 'stand' , 'none'],
+    # ['ridge', 'stand', 'none'],
     # ['ridge', 'stand', 'kpca'],
     # ['ridge', 'stand', 'none'],
     # ['ridge', 'stand', 'none'],
     # ['svr'  , 'stand', 'none'],
-    # ['mlp'  , 'stand', 'none'],
+    # ['svr'  , 'stand', 'none'],
     ]
 
 # plt.figure()
@@ -65,8 +67,8 @@ print(axes)
 for index, test in enumerate(tests) :
     x_train = S.x_train
     y_train = S.y_train
-    x_val = S.x_val
-    y_val = S.y_val
+    x_val = S.x_val[:30000]
+    y_val = S.y_val[:30000]
 
     title = names[test[0]] + ' Regression with ' + names[test[1]] + ' Scaling and ' + names[test[2]] + ' Dimensionality Reduction'
     print('\n====' + title + "====")
@@ -92,18 +94,21 @@ for index, test in enumerate(tests) :
     axis.set_title(title)
     axis.plot(y_val, label=['y_val engine', 'y_val secondary'])
     axis.plot(y_val_pred, label=['y_val_pred engine', 'y_val_pred secondary'])
-    axis.plot(x_val[:,-8], label='x_test[speed_engine_rpm]')
-    axis.plot(x_val[:,-7], label='x_test[speed_secondary_rpm]')
+    axis.plot(S.x_val[:30000,-8], label='x_test[speed_engine_rpm]')
+    axis.plot(S.x_val[:30000,-7], label='x_test[speed_secondary_rpm]')
     axis.set_ylim([0,4500])
     # axis.plot(y_val_pred, label='val_pred')
     axis.legend()
 
+    if (test[0] == 'ridge' or test[0] == 'lasso'):
+        S.print_weights(reg[test[0]].coef_[1,:])
+
     print('Training   R^2: E=%.4f, S=%.4f' % (r2_score(y_train[:,0], y_train_pred[:,0]), r2_score(y_train[:,1], y_train_pred[:,1])))
     print('Validation R^2: E=%.4f, S=%.4f' % (r2_score(y_val[:,0], y_val_pred[:,0]), r2_score(y_val[:,1], y_val_pred[:,1])))
-    print('Baseline   R^2: E=%.4f, S=%.4f' % (r2_score(y_val[:,0], S.x_val[:,-8]), r2_score(y_val[:,1], S.x_val[:,-7])))
+    print('Baseline   R^2: E=%.4f, S=%.4f' % (r2_score(y_val[:,0], S.x_val[:30000,-8]), r2_score(y_val[:,1], S.x_val[:30000,-7])))
     print('Training   MSE: E=%.4f, S=%.4f' % (mean_squared_error(y_train[:,0], y_train_pred[:,0]), mean_squared_error(y_train[:,1], y_train_pred[:,1])))
     print('Validation MSE: E=%.4f, S=%.4f' % (mean_squared_error(y_val[:,0], y_val_pred[:,0]), mean_squared_error(y_val[:,1], y_val_pred[:,1])))
-    print('Baseline   MSE: E=%.4f, S=%.4f' % (mean_squared_error(y_val[:,0], S.x_val[:,-8]), mean_squared_error(y_val[:,1], S.x_val[:,-7])))
+    print('Baseline   MSE: E=%.4f, S=%.4f' % (mean_squared_error(y_val[:,0], S.x_val[:30000,-8]), mean_squared_error(y_val[:,1], S.x_val[:30000,-7])))
 
 
 plt.show()
