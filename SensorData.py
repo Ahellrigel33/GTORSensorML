@@ -106,6 +106,19 @@ class SensorData:
                 self.validation_data['cody_BIN'][key] = self.named_data['cody_BIN'][key][50000:84000]
                 self.named_data['cody_BIN'][key] = np.concatenate((self.named_data['cody_BIN'][key][:50000], self.named_data['cody_BIN'][key][84000:]))
 
+    def get_list_of_sensor_weight_positions(self):
+        weight_pos = list()
+        for i in range(-10, 0):
+            for sensor in self.sensors:
+                weight_pos.append("{} pos {}: ".format(sensor, i))
+        weight_pos.append("Offset: ")
+        return weight_pos
+
+    def print_weights(self, weights):
+        positions = self.get_list_of_sensor_weight_positions()
+        for i in range(len(positions)):
+            print(positions[i] + str(weights[i]))
+
     def aggregate_data(self, percent_data=0.02, use_daata_files=False):
         for k, data_to_aggregate in enumerate([self.named_data, self.validation_data, self.test_data]):
             i = 0
