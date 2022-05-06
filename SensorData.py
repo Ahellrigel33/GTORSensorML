@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-# import math
+import random
+import time
 
 
 class SensorData:
@@ -110,13 +111,13 @@ class SensorData:
         index = 0
         string = "    "
         for sensor in self.sensors:
-            string += sensor.rjust(10)
+            string += sensor.rjust(12)
         print(string)
 
         for i in range(-10, 0):
             string = "{}: ".format(i).rjust(5)
             for j in range(len(self.sensors)):
-                string += " {:.5f} ".format(weights[index]).rjust(10)
+                string += " {:.5f} ".format(weights[index]).rjust(12)
                 index += 1
             print(string)
 
@@ -198,6 +199,19 @@ class SensorData:
                 self.x_test = x_data
                 self.y_test = y_data
 
+    def noise_injection(self, **kwargs):
+        p = kwargs.get('injection_probability', 0.1)
+        use_dropout = kwargs.get('use_dropout', False)
+        mean = np.mean(self.x_train, axis=0)
+        std_dev = np.std(self.x_train, axis=0) * kwargs.get('noise_variation', 0.1)
+        print(self.x_train.shape)
+        for i in range(self.x_train.shape[0]):
+            for j in range(self.x_train.shape[1]):
+                if random.random() < p:
+                    if use_dropout:
+                        self.x_train[i][j] = 0
+                    else:
+                        self.x_train[i][j] += np.random.normal(mean[j], std_dev[j])
 
 
 if __name__ == "__main__":
@@ -206,17 +220,18 @@ if __name__ == "__main__":
     S.preprocess_data()
     S.split_data()
     S.aggregate_data()
+    S.noise_injection()
 
-    print(S.x_train.shape)
-    print(np.sum(np.isnan(S.x_train)))
-    print(S.x_train.dtype)
+    # print(S.x_train.shape)
+    # print(np.sum(np.isnan(S.x_train)))
+    # print(S.x_train.dtype)
+    #
+    # print(S.y_train.shape)
 
-    print(S.y_train.shape)
-
-    plt.figure()
+    # plt.figure()
     # plt.plot(S.x_train[:, -8])
     # plt.plot(S.x_train[:, -7])
     # plt.figure()
-    plt.plot(S.y_train)
-    plt.show()
+    # plt.plot(S.y_train)
+    # plt.show()
 
