@@ -55,10 +55,10 @@ class SensorData:
     def preprocess_data(self):
         for key in self.bin_files:
             for sensor in self.average_sensors:
-                self.named_data[key][sensor] = np.convolve(self.named_data[key][sensor], np.ones(self.bin_average_window)/self.bin_average_window, 'same')
-        for key in self.daata_files:
-            for sensor in self.average_sensors:
-                self.named_data[key][sensor] = np.convolve(self.named_data[key][sensor], np.ones(self.daata_average_window)/self.daata_average_window, 'same')
+                self.named_data[key][sensor] = np.convolve(self.named_data[key][sensor], np.ones(self.bin_average_window, dtype=np.float64)/self.bin_average_window, 'same')
+        # for key in self.daata_files:
+        #     for sensor in self.average_sensors:
+        #         self.named_data[key][sensor] = np.convolve(self.named_data[key][sensor], np.ones(self.daata_average_window, dtype=np.float64)/self.daata_average_window, 'same')
 
     def split_data(self):
         """
