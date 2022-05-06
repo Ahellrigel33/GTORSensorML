@@ -8,8 +8,13 @@ class SensorData:
         np.random.seed(2022)
         self.named_data = dict()
         self.test_data = dict()
-        self.x_train = list()
-        self.y_train = list()
+        self.validation_data = dict()
+        self.x_train = None
+        self.y_train = None
+        self.x_val = None
+        self.y_val = None
+        self.x_test = None
+        self.y_test = None
         self.imported_labels = ['time_auxdaq_us', 'speed_engine_rpm', 'speed_secondary_rpm', 'lds_pedal_mm', 'imu_acceleration_x', 'imu_acceleration_y', 'imu_acceleration_z', 'pressure_frontbrake_psi']
         self.sensors = ['time', 'engine', 'secondary', 'pedal_lds', 'imux', 'imuy', 'imuz', 'front_brake']
         self.average_sensors = ['engine', 'secondary', 'imux', 'imuy', 'imuz']
@@ -36,8 +41,6 @@ class SensorData:
         imported['caden1'] = np.genfromtxt('CSVFiles/Caden_3Laps_FullSpeed.csv', dtype=float, delimiter=",", names=True)
         imported['caden1_BIN'] = np.genfromtxt('CSVFiles/Caden_3Laps_FullSpeed_BIN.csv', dtype=float, delimiter=",", names=True)
         imported['caden2'] = np.genfromtxt('CSVFiles/Caden_3LapTest_FullSpeed.csv', dtype=float, delimiter=",", names=True)
-
-        print(type(imported['cody']))
 
         # Convert everything to numpy arrays and store sensor data under simpler labels
         for key in imported:
@@ -68,15 +71,25 @@ class SensorData:
         self.test_data['andrew4_BIN'] = dict()
         self.test_data['caden1'] = dict()
         self.test_data['caden1_BIN'] = dict()
+        self.validation_data['cody'] = dict()
+        self.validation_data['cody_BIN'] = dict()
+        self.validation_data['caden1'] = dict()
+        self.validation_data['caden1_BIN'] = dict()
         for key in self.sensors:
             self.test_data['andrew2'][key] = self.named_data['andrew2'][key][4000:]
             self.named_data['andrew2'][key] = self.named_data['andrew2'][key][:4000]
             self.test_data['andrew4_BIN'][key] = self.named_data['andrew4_BIN'][key][25000:]
             self.named_data['andrew4_BIN'][key] = self.named_data['andrew4_BIN'][key][:25000]
             self.test_data['caden1'][key] = self.named_data['caden1'][key][3485:]
-            self.named_data['caden1'][key] = self.named_data['caden1'][key][:3485]
+            self.validation_data['caden1'][key] = self.named_data['caden1'][key][2324:3485]
+            self.named_data['caden1'][key] = self.named_data['caden1'][key][:2324]
             self.test_data['caden1_BIN'][key] = self.named_data['caden1_BIN'][key][17938:]
-            self.named_data['caden1_BIN'][key] = self.named_data['caden1_BIN'][key][:17938]
+            self.validation_data['caden1_BIN'][key] = self.named_data['caden1_BIN'][key][11959:17938]
+            self.named_data['caden1_BIN'][key] = self.named_data['caden1_BIN'][key][:11959]
+            self.validation_data['cody'][key] = self.named_data['cody'][key][4000:]
+            self.named_data['cody'][key] = self.named_data['cody'][key][:4000]
+            self.validation_data['cody_BIN'][key] = self.named_data['cody_BIN'][key][50000:]
+            self.named_data['cody_BIN'][key] = self.named_data['cody_BIN'][key][:50000]
 
         if __name__ == "__main__":
             for key in self.named_data:
@@ -84,37 +97,69 @@ class SensorData:
             for key in self.test_data:
                 print("Key: {}, Size: {}".format(key, self.test_data[key]['time'].shape))
 
-    def aggregate_data(self, percent_data=0.02):
-        for key in self.named_data:
-            self.named_data[key]['aggregate'] = np.array([self.named_data[key]['time'],
-                                                         self.named_data[key]['engine'],
-                                                         self.named_data[key]['secondary'],
-                                                         self.named_data[key]['pedal_lds'],
-                                                         self.named_data[key]['imux'],
-                                                         self.named_data[key]['imuy'],
-                                                         self.named_data[key]['imuz'],
-                                                         self.named_data[key]['front_brake']]).T
+    def aggregate_data(self, percent_data=0.02, use_daata_files=False):
+        for k, data_to_aggregate in enumerate([self.named_data, self.validation_data, self.test_data]):
+            for key in data_to_aggregate:
+                data_to_aggregate[key]['aggregate'] = np.array([data_to_aggregate[key]['time'],
+                                                             data_to_aggregate[key]['engine'],
+                                                             data_to_aggregate[key]['secondary'],
+                                                             data_to_aggregate[key]['pedal_lds'],
+                                                             data_to_aggregate[key]['imux'],
+                                                             data_to_aggregate[key]['imuy'],
+                                                             data_to_aggregate[key]['imuz'],
+                                                             data_to_aggregate[key]['front_brake']]).T
 
-        data_points = 0
-        for key in self.bin_files:
-            num_points, num_features = self.named_data[key]["aggregate"].shape
-            data_points += math.floor(num_points*percent_data)
+            data_points = 0
+            for key in self.bin_files:
+                if key in data_to_aggregate.keys():
+                    num_points, num_features = data_to_aggregate[key]["aggregate"].shape
+                    data_points += math.floor(num_points*percent_data)
+            if use_daata_files:
+                for key in self.daata_files:
+                    if key in data_to_aggregate.keys():
+                        num_points, num_features = data_to_aggregate[key]["aggregate"].shape
+                        data_points += math.floor(num_points * percent_data)
 
-        self.x_train = np.empty((data_points, num_features * self.holdpoints + 1))
-        self.y_train = np.empty((data_points, 2))
+            x_data = np.empty((data_points, num_features * self.holdpoints + 1))
+            y_data = np.empty((data_points, 2))
 
-        for key in self.bin_files:
-            num_points, num_features = self.named_data[key]["aggregate"].shape
-            rng = np.random.default_rng(np.random.randint(10000))  # Make each selection random but still repeatable
-            numbers = rng.choice((num_points - self.holdpoints - self.bin_predict), size=math.floor(num_points*percent_data), replace=False)
+            for key in self.bin_files:
+                if key in data_to_aggregate.keys():
+                    num_points, num_features = data_to_aggregate[key]["aggregate"].shape
+                    rng = np.random.default_rng(np.random.randint(10000))  # Make each selection random but still repeatable
+                    numbers = rng.choice((num_points - self.holdpoints - self.bin_predict), size=math.floor(num_points*percent_data), replace=False)
 
-            for i, base in enumerate(numbers):
-                for hp in range(self.holdpoints):
-                    self.x_train[i, hp * num_features:(hp + 1) * num_features] = self.named_data[key]['aggregate'][base + hp, :]
-                self.x_train[i, num_features * self.holdpoints] = 1
+                    for i, base in enumerate(numbers):
+                        for hp in range(self.holdpoints):
+                            x_data[i, hp * num_features:(hp + 1) * num_features] = data_to_aggregate[key]['aggregate'][base + hp, :]
+                        x_data[i, num_features * self.holdpoints] = 1
 
-                self.y_train[i, 0] = self.named_data[key]['engine'][base + self.holdpoints + self.bin_predict]
-                self.y_train[i, 1] = self.named_data[key]['secondary'][base + self.holdpoints + self.bin_predict]
+                        y_data[i, 0] = data_to_aggregate[key]['engine'][base + self.holdpoints + self.bin_predict]
+                        y_data[i, 1] = data_to_aggregate[key]['secondary'][base + self.holdpoints + self.bin_predict]
+
+            if use_daata_files:
+                for key in self.daata_files:
+                    if key in data_to_aggregate.keys():
+                        num_points, num_features = data_to_aggregate[key]["aggregate"].shape
+                        rng = np.random.default_rng(np.random.randint(10000))  # Make each selection random but still repeatable
+                        numbers = rng.choice((num_points - self.holdpoints - self.daata_predict), size=math.floor(num_points*percent_data), replace=False)
+
+                        for i, base in enumerate(numbers):
+                            for hp in range(self.holdpoints):
+                                x_data[i, hp * num_features:(hp + 1) * num_features] = data_to_aggregate[key]['aggregate'][base + hp, :]
+                            x_data[i, num_features * self.holdpoints] = 1
+
+                            y_data[i, 0] = data_to_aggregate[key]['engine'][base + self.holdpoints + self.daata_predict]
+                            y_data[i, 1] = data_to_aggregate[key]['secondary'][base + self.holdpoints + self.daata_predict]
+            if k == 0:
+                self.x_train = x_data
+                self.y_train = y_data
+            if k == 1:
+                self.x_val = x_data
+                self.y_val = y_data
+            if k == 2:
+                self.x_test = x_data
+                self.y_test = y_data
 
 
 
