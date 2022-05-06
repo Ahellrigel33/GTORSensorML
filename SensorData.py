@@ -103,8 +103,8 @@ class SensorData:
                 self.validation_data['cody'][key] = self.named_data['cody'][key][4000:]
                 self.named_data['cody'][key] = self.named_data['cody'][key][:4000]
             if 'cody_BIN' in self.named_data.keys():
-                self.validation_data['cody_BIN'][key] = self.named_data['cody_BIN'][key][50000:]
-                self.named_data['cody_BIN'][key] = self.named_data['cody_BIN'][key][:50000]
+                self.validation_data['cody_BIN'][key] = self.named_data['cody_BIN'][key][50000:84000]
+                self.named_data['cody_BIN'][key] = np.concatenate((self.named_data['cody_BIN'][key][:50000], self.named_data['cody_BIN'][key][84000:]))
 
     def aggregate_data(self, percent_data=0.02, use_daata_files=False):
         for k, data_to_aggregate in enumerate([self.named_data, self.validation_data, self.test_data]):
